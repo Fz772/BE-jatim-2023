@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Validation extends Model
 {
     protected $guarded = [];
+    public $timestamps = false;
 
     public function society() {
         return $this->belongsTo(Society::class);
