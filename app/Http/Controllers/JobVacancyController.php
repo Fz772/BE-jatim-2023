@@ -52,12 +52,9 @@ class JobVacancyController extends Controller
             }),
         ];
     });
-
-
             return response()->json([
                 $vacancies
             ]);
-
     }
 
     /**

@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\JobApplyPosition;
 use App\Models\JobApplySociety;
+use App\Models\JobVacancy;
 use App\Models\Validation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -58,7 +60,44 @@ class ApplicationController extends Controller
                 'message' => 'Application for a job can only be once'
             ],401);
         }
+
+        $vacancy = JobVacancy::with('positions')->find($request->vacancy_id);
+        $validPosition = [];
+
+
+        foreach ($vacancy->positions as $pos) {
+            if (in_array($pos->position, $request->positions)) {
+                $applyCount = JobApplyPosition::where('position_id', $pos->id)->count();
+                if($applyCount < $pos->capacity) {
+                    $validPosition[] = $pos;
+                }
+            }
+        }
         
+        if (count($validPosition) === 0) {
+            return response()->json([
+                'message' => 'No available positions to apply'
+            ],400 );
+        }
+
+        $applySociety = JobApplySociety::create([
+            'society_id' => $user->id,
+            'job_vacancy_id' => $request->vacancy_id,
+            'notes' => $request->notes
+        ]);
+
+        foreach ($validPosition as $pos) {
+            JobApplyPosition::create([
+                'job_apply_societies_id' => $applySociety->id,
+                'society_id' => $user->id,
+                'job_vacancy_id' => $vacancy->id,
+                'position_id' => $pos->id
+            ]);
+        }
+        return response()->json([
+            'message' => 'Applying for job successfully'
+        ]);
+
 
 
 
