@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class JobApplyPosition extends Model
 {
     protected $guarded = [];
+    public $timestamps = false;
 
     public function society() {
         return $this->belongsTo(Society::class, 'society_id', 'id');

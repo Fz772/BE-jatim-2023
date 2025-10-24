@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\JobVacancyController;
 use App\Http\Controllers\ValidationController;
@@ -15,6 +16,8 @@ Route::prefix('/v1')->group(function () {
         Route::get('/validations', [ValidationController::class, 'index']);
         Route::get('/job_vacancies', [JobVacancyController::class, 'index']);
         Route::get('/job_vacancies/{id}', [JobVacancyController::class, 'show']);
+        Route::post('/applications', [ApplicationController::class, 'store']);
+        Route::get('/applications', [ApplicationController::class, 'index']);
 
     });
     

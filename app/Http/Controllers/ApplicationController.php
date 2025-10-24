@@ -14,9 +14,49 @@ class ApplicationController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $user = $request->user();
+
+        // Kalau token invalid / user tidak terautentikasi
+        if (!$user) {
+            return response()->json([
+                'message' => 'Unauthorized user'
+            ], 401);
+        }
+
+        // Ambil semua data lamaran milik society yang login
+        $applications = JobApplySociety::with([
+            'jobVacancy.jobCategory', // relasi ke kategori lowongan
+            'jobVacancy.availablePositions', // semua posisi dalam vacancy
+            'jobApplyPositions.availablePosition' // posisi yang dilamar
+        ])
+        ->where('society_id', $user->id)
+        ->get();
+
+        // Bentuk response seperti format yang kamu kasih
+        $vacancies = $applications->map(function ($app) {
+            return [
+                'id' => $app->jobVacancy->id,
+                'category' => [
+                    'id' => $app->jobVacancy->jobCategory->id,
+                    'job_category' => $app->jobVacancy->jobCategory->job_category,
+                ],
+                'company' => $app->jobVacancy->company,
+                'address' => $app->jobVacancy->address,
+                'positions' => $app->jobApplyPositions->map(function ($pos) {
+                    return [
+                        'position' => $pos->availablePosition->position,
+                        'apply_status' => $pos->apply_status,
+                        'notes' => $pos->notes,
+                    ];
+                }),
+            ];
+        });
+
+        return response()->json([
+            'vacancies' => $vacancies
+        ], 200);
     }
 
     /**
@@ -46,7 +86,8 @@ class ApplicationController extends Controller
             'vacancy_id' => 'required|exists:job_vacancies,id',
             'positions' => 'required|array|min:1',
             'positions.*' => 'string',
-            'notes' => 'required|string'
+            'notes' => 'required|string',
+            
         ]);
         if($validator->fails()) {
             return response()->json([
@@ -54,21 +95,24 @@ class ApplicationController extends Controller
                 'errors' => $validator->errors()
             ]);
         }
-        $existingApplication = JobApplySociety::where('society_id', $user->id)->first();
+        $existingApplication = JobApplySociety::where('society_id', $user->id)
+    ->where('job_vacancy_id', $request->vacancy_id)
+    ->first();
+
         if($existingApplication) {
             return response()->json([
                 'message' => 'Application for a job can only be once'
             ],401);
         }
 
-        $vacancy = JobVacancy::with('positions')->find($request->vacancy_id);
+        $vacancy = JobVacancy::with('availablePositions')->find($request->vacancy_id);
         $validPosition = [];
 
 
-        foreach ($vacancy->positions as $pos) {
+        foreach ($vacancy->availablePositions as $pos) {
             if (in_array($pos->position, $request->positions)) {
                 $applyCount = JobApplyPosition::where('position_id', $pos->id)->count();
-                if($applyCount < $pos->capacity) {
+                if($applyCount < $pos->apply_capacity) {
                     $validPosition[] = $pos;
                 }
             }
@@ -83,15 +127,20 @@ class ApplicationController extends Controller
         $applySociety = JobApplySociety::create([
             'society_id' => $user->id,
             'job_vacancy_id' => $request->vacancy_id,
-            'notes' => $request->notes
+            'notes' => $request->notes,
+            'date' => now()
         ]);
 
         foreach ($validPosition as $pos) {
             JobApplyPosition::create([
-                'job_apply_societies_id' => $applySociety->id,
+                'date' => now(),
                 'society_id' => $user->id,
                 'job_vacancy_id' => $vacancy->id,
-                'position_id' => $pos->id
+                'position_id' => $pos->id,
+                'job_apply_societies_id' => $applySociety->id,
+                'status' => 'pending'
+                
+                
             ]);
         }
         return response()->json([

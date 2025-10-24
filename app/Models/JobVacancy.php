@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class JobVacancy extends Model
 {
     protected $guarded = [];
+    public $timestamps = false;
 
     public function jobCategory() {
         return $this->belongsTo(JobCategory::class);

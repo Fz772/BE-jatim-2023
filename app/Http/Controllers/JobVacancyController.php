@@ -22,14 +22,13 @@ class JobVacancyController extends Controller
         }
 
         $validation = Validation::where('society_id', $user->id)
-            ->where('status','accepted')
             ->first();
 
-        if(!$validation) {
-            return response()->json([
-                'message' => 'Your validation data is not accepted'
-            ],403);
-        }
+        // if(!$validation) {
+        //     return response()->json([
+        //         'message' => 'Your validation data is not accepted'
+        //     ],403);
+        // }
         $vacancies = JobVacancy::with(['jobCategory', 'availablePositions.jobApplyPositions'])
     ->where('job_category_id', $validation->job_category_id)
     ->get()
@@ -77,14 +76,14 @@ class JobVacancyController extends Controller
                 'message' => 'Unauthorized user'
             ],401);
         }
-        $validation = Validation::where('society_id', $user->id)
-            ->where('status', 'accepted')
-            ->first();
-        if(!$validation) {
-            return response()->json([
-                'message' => 'Your validation data is not accepted'
-            ],403);
-        }
+        // $validation = Validation::where('society_id', $user->id)
+        //     ->where('status', 'accepted')
+        //     ->first();
+        // if(!$validation) {
+        //     return response()->json([
+        //         'message' => 'Your validation data is not accepted'
+        //     ],403);
+        // }
         $vacancy = JobVacancy::with(['jobCategory', 'availablePositions.jobApplyPositions'])
             ->where('id', $id)
             ->first();
