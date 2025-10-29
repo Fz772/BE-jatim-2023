@@ -46,6 +46,8 @@ class ValidationController extends Controller
                 'message' => 'Unauthorized user'
             ],401);
         }
+
+
         $validator = Validator::make($request->all(),[
             'work_experience' => 'required|string',
             'job_category_id' => 'required|integer',
@@ -58,8 +60,14 @@ class ValidationController extends Controller
                     'error' => $validator->errors()
             ],422);
         }
+        // if()
 
         $validated = $validator->validated();
+        if(Validation::where('society_id', $user->id)->exists()) {
+            return response()->json([
+                'message' => 'You have already submitted a validation request'
+            ]);
+        }
 
         Validation::create([
             'society_id' => $user->id,
@@ -69,11 +77,7 @@ class ValidationController extends Controller
             'reason_accepted' => $validated['reason_accepted']
         ]);
 
-        if(Validation::where('society_id', $request->id)->exists()) {
-            return response()->json([
-
-            ]);
-        }
+        
 
         return response()->json([
             'message' => 'Request data validation sent successful'

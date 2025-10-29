@@ -15,6 +15,6 @@ class JobApplySociety extends Model
         return $this->belongsTo(JobVacancy::class, 'job_vacancy_id', 'id');
     }
     public function jobApplyPositions(){
-        return $this->hasMany(JobApplyPosition::class, 'job_apply_society_id');
+        return $this->hasMany(JobApplyPosition::class, 'job_apply_societies_id');
     }
 }

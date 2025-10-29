@@ -18,41 +18,43 @@ class ApplicationController extends Controller
     {
         $user = $request->user();
 
-        // Kalau token invalid / user tidak terautentikasi
+        
         if (!$user) {
             return response()->json([
                 'message' => 'Unauthorized user'
             ], 401);
         }
 
-        // Ambil semua data lamaran milik society yang login
+        
         $applications = JobApplySociety::with([
-            'jobVacancy.jobCategory', // relasi ke kategori lowongan
-            'jobVacancy.availablePositions', // semua posisi dalam vacancy
-            'jobApplyPositions.availablePosition' // posisi yang dilamar
+            'jobVacancy.jobCategory', 
+            'jobVacancy.availablePositions', 
+            'jobApplyPositions.position' 
         ])
         ->where('society_id', $user->id)
         ->get();
 
-        // Bentuk response seperti format yang kamu kasih
-        $vacancies = $applications->map(function ($app) {
-            return [
-                'id' => $app->jobVacancy->id,
-                'category' => [
-                    'id' => $app->jobVacancy->jobCategory->id,
-                    'job_category' => $app->jobVacancy->jobCategory->job_category,
-                ],
-                'company' => $app->jobVacancy->company,
-                'address' => $app->jobVacancy->address,
-                'positions' => $app->jobApplyPositions->map(function ($pos) {
-                    return [
-                        'position' => $pos->availablePosition->position,
-                        'apply_status' => $pos->apply_status,
-                        'notes' => $pos->notes,
-                    ];
-                }),
-            ];
-        });
+        
+        // $vacancies = $applications->map(function ($app) {
+        //     return [
+        //         'id' => $app->jobVacancy->id,
+        //         'category' => [
+        //             'id' => $app->jobVacancy->jobCategory->id,
+        //             'job_category' => $app->jobVacancy->jobCategory->job_category,
+        //         ],
+        //         'company' => $app->jobVacancy->company,
+        //         'address' => $app->jobVacancy->address,
+        //         'positions' => $app->jobApplyPositions->map(function ($pos) {
+        //             return [
+        //                 'position' => $pos->availablePosition->position,
+        //                 'apply_status' => $pos->apply_status,
+        //                 'notes' => $pos->notes,
+        //             ];
+        //         }),
+        //     ];
+        // });
+
+        $vacancies = $applications;
 
         return response()->json([
             'vacancies' => $vacancies
